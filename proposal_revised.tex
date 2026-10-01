@@ -1,0 +1,122 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\title{Project Proposal (Revised):\\Multi-Exposure Diffusion of Instagram Reposts}
+\author{Lavanya Kumar\\Student Number: 219148790}
+\date{March 20, 2026}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Instagram distributes content through feeds, recommendations, and social resharing; Meta explains that ranking combines many signals including engagement and recency (Meta Platforms Inc., 2024). Users therefore often see the same post or reel multiple times before reposting. Classical SIR or single-threshold models can miss this \emph{reinforcement} effect.
+
+This proposal develops an ODE model with exposure classes $I_0,\ldots,I_m$, active sharers $S$, and saturated users $R$. The goals are: (1)~characterize when a small seed of sharers leads to viral growth; (2)~quantify how repost intensity and attention decay change peak sharing and final reach; (3)~compare scenarios reminiscent of memes, news, and campaigns in the final report.
+
+\section{Literature Review}
+
+Rumor and information diffusion have long been modelled with epidemic-style compartments. Daley and Kendall (1965) introduced ignorants, spreaders, and stiflers; Maki and Thompson (1973) gave a related formulation where spreading activity subsides. Network topology matters for cascades: Kempe, Kleinberg, and Tardos (2003) studied influence maximization on graphs.
+
+Empirically, Centola (2010) showed that repeated exposure can be necessary for adoption. Rogers (2003) described heterogeneous adoption timing across adopter categories. Threshold-style behaviour also appears in social-threshold models (Granovetter, 1978). Together, these sources motivate tracking \emph{how many times} a user has been exposed, not only whether they have seen the content once.
+
+\section{Model}
+
+\subsection{Compartments and assumptions}
+
+Let $N$ be fixed. For $i=0,\ldots,m$, $I_i(t)$ counts users exposed exactly $i$ times who have not started sharing. Let $S(t)$ be active sharers and $R(t)$ saturated users. The exposure rate is $\lambda(t)=\beta S(t)/N$ with $\beta>0$. Upon an exposure while in $I_i$, a user shares with probability $\rho_i$, saturates with probability $\sigma_i$, or advances to $I_{i+1}$ with probability $1-\rho_i-\sigma_i$, requiring $0\le\rho_i,\sigma_i\le 1$ and $\rho_i+\sigma_i\le 1$. Sharers decay at rate $\gamma>0$.
+
+\textbf{Table~1} summarizes notation; all symbols appear there before use in the equations.
+
+\subsection{Equations (interpretation)}
+
+\begin{align}
+\frac{dI_0}{dt} &= -\lambda(t) I_0, \\
+\frac{dI_i}{dt} &= (1-\rho_{i-1}-\sigma_{i-1})\lambda(t)I_{i-1}-\lambda(t)I_i, \quad i=1,\ldots,m-1, \\
+\frac{dI_m}{dt} &= (1-\rho_{m-1}-\sigma_{m-1})\lambda(t)I_{m-1}-(\rho_m+\sigma_m)\lambda(t)I_m, \\
+\frac{dS}{dt} &= \sum_{i=0}^{m}\rho_i\lambda(t)I_i-\gamma S, \\
+\frac{dR}{dt} &= \sum_{i=0}^{m}\sigma_i\lambda(t)I_i+\gamma S.
+\end{align}
+
+The first equation removes susceptibles from $I_0$ at the exposure rate. The middle equations move mass along the exposure chain. The last class $I_m$ forces a share or drop-out on further exposure. The $S$ and $R$ equations collect new sharers and saturated users from all $I_i$, plus decay of $S$ into $R$.
+
+Population is conserved: $\sum_i I_i+S+R=N$.
+
+\subsection{Table 1: Variables and parameters}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Symbol & Description \\
+\midrule
+$N$ & Total population \\
+$m$ & Maximum exposure index \\
+$I_i(t)$ & Exposed $i$ times, not sharing \\
+$S(t)$ & Active sharers \\
+$R(t)$ & Saturated users \\
+$\beta$ & Intensity in $\lambda=\beta S/N$ \\
+$\rho_i,\sigma_i$ & Share / saturate probabilities at exposure $i$ \\
+$\gamma$ & Sharer decay rate \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Proposed Analysis}
+
+\subsection{Theory}
+
+I will linearize near the no-spread state and derive a threshold of the form $R_{\mathrm{eff}}\approx (\beta/\gamma)p_{\mathrm{share}}$. For $m=2$,
+\[
+p_{\mathrm{share}}\approx \rho_0+(1-\rho_0-\sigma_0)\rho_1+(1-\rho_0-\sigma_0)(1-\rho_1-\sigma_1)\rho_2.
+\]
+
+\subsection{Computation}
+
+Python simulations (\texttt{scipy.integrate.odeint}) for viral, fizzle, and intermediate $(\beta,\gamma,\rho_i,\sigma_i)$. Report peak $S(t)$, time to peak, and $R(t)$ at terminal time. One-at-a-time sensitivity in $\beta$, $\gamma$, and early $\rho_i$; multiple initial seeds $S(0)\in\{5,10,15\}$.
+
+\subsection{Figures and tables}
+
+Time series ($S,R$), comparison of $S$ across scenarios, and tables of parameters and numeric outcomes (as in the progress report).
+
+\section{Preliminary Results}
+
+Initial runs ($N=1000$, $m=2$, $S(0)=15$, $t\in[0,100]$ dimensionless units) show a large peak only in the viral parameter regime; see the companion progress report (\texttt{report.tex}) for full tables and figures. Threshold estimates from $p_{\mathrm{share}}$ align qualitatively with these outcomes.
+
+\section{Parameter Selection and Limitations}
+
+Parameters will satisfy $0\le\rho_i,\sigma_i\le 1$ and $\rho_i+\sigma_i\le 1$. Scenario sets (viral / fizzle / intermediate) will be documented in tables with plain-language justification. Limitations: homogeneous mixing (no explicit follower graph), single competing piece of content, and no calibration to platform data yet.
+
+\section{Expected Contributions}
+
+(1)~A transparent multi-exposure extension of rumor-style ODE models. (2)~Threshold-style conditions linked to simulated peaks. (3)~Scenario comparisons for interpretation (e.g.\ campaign vs meme-like spread).
+
+\section{Future Work}
+
+\begin{enumerate}
+    \item Equilibrium and stability analysis for $m=2$.
+    \item Sensitivity sweeps over $\beta$, $\gamma$, and $(\rho_0,\rho_1,\rho_2)$; multiple seeds $S(0)$.
+    \item Tuned intermediate regime with a visible sub-viral peak.
+    \item Case-study framing (memes, news, awareness) and optional network-weighted exposure.
+\end{enumerate}
+
+\section{References}
+
+Centola, D. (2010). The spread of behavior in an online social network experiment. \textit{Science}, 329(5996), 1194--1197.
+
+Daley, D. J., \& Kendall, D. G. (1965). Stochastic rumours. \textit{Journal of the Institute of Mathematics and its Applications}, 1(1), 42--55.
+
+Granovetter, M. (1978). Threshold models of collective behavior. \textit{American Journal of Sociology}, 83(6), 1420--1443.
+
+Kempe, D., Kleinberg, J., \& Tardos, \'E. (2003). Maximizing the spread of influence through a social network. \textit{KDD '03}, 137--146.
+
+Maki, D. P., \& Thompson, M. (1973). \textit{Mathematical Models and Applications}. Prentice Hall.
+
+Meta Platforms Inc. (2024). How the Instagram algorithm works. Instagram Help Center. \url{https://help.instagram.com/}
+
+Rogers, E. M. (2003). \textit{Diffusion of Innovations} (5th ed.). Free Press.
+
+\end{document}
